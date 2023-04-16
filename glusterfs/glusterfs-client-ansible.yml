@@ -1,0 +1,19 @@
+- hosts: glusterfs-client
+  become: true
+  tasks:
+    - name: Install GlusterFS client
+      apt:
+        name: glusterfs-client
+        state: present
+
+    - name: Mount GlusterFS volume
+      mount:
+        name: /mnt/vol1
+        src: "{{ glusterfs_nodes[0] }}:/vol1"
+        fstype: glusterfs
+        opts: _netdev,noauto
+      vars:
+        glusterfs_nodes:
+          - node1.example.com
+          - node2.example.com
+          - node3.example.com
