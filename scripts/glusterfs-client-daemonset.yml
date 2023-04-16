@@ -1,0 +1,26 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: glusterfs-client
+  namespace: kube-system
+spec:
+  selector:
+    matchLabels:
+      app: glusterfs-client
+  template:
+    metadata:
+      labels:
+        app: glusterfs-client
+    spec:
+      containers:
+        - name: glusterfs-client
+          image: gluster/gluster-centos
+          volumeMounts:
+            - name: glusterfs-vol
+              mountPath: /mnt/glusterfs
+      volumes:
+        - name: glusterfs-vol
+          glusterfs:
+            endpoints: glusterfs-cluster
+            path: vol1
+            readOnly: false
