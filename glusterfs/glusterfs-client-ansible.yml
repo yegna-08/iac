@@ -1,19 +1,31 @@
-- hosts: glusterfs-client
+- name: Mount GlusterFS volume on another node
+  #This is from inventory file
+  hosts: glusterfs_clients
   become: true
-  tasks:
-    - name: Install GlusterFS client
-      apt:
-        name: glusterfs-client
-        state: present
 
-    - name: Mount GlusterFS volume
-      mount:
-        name: /mnt/vol1
-        src: "{{ glusterfs_nodes[0] }}:/vol1"
-        fstype: glusterfs
-        opts: _netdev,noauto
-      vars:
-        glusterfs_nodes:
-          - node1.example.com
-          - node2.example.com
-          - node3.example.com
+  vars: #Change these values If required
+    # Gluster configuration.
+    gluster_brick_name: gluster_volume
+    #This is from inventory file
+    gluster_server: glusterfs_servers
+
+  tasks:
+  - name: Install GlusterFS packages
+    apt:
+      name:
+        - glusterfs-client
+      state: present
+
+  - name: Create mount point directory
+    file:
+      path: /mnt/myvolume
+      state: directory
+      mode: '0755'
+
+  - name: Mount GlusterFS volume
+    mount:
+      name: /mnt/"{{ gluster_brick_name }}"
+      src: "{{ gluster_server }}:/{{ gluster_brick_name }}"
+      fstype: glusterfs
+      opts: _netdev
+      state: mounted

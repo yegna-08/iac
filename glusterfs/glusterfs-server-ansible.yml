@@ -1,0 +1,44 @@
+---
+- name: Install GlusterFS on a single node
+  #This is from inventory file
+  hosts: glusterfs_servers
+  become: true
+
+  vars: #Change these values If required
+    # Gluster configuration.
+    gluster_brick_name: gluster_volume
+    gluster_brick_dirs:
+      - "/mnt/brick1/gv0"
+
+  tasks:
+  - name: Install GlusterFS packages
+    apt:
+      name:
+        - glusterfs-server
+      state: present
+
+  - name: Start and enable GlusterFS service
+    service:
+      name: glusterfs-server
+      state: started
+      enabled: true
+
+  - name: Ensure Gluster brick and mount directories exist.
+    file: "path={{ item }} state=directory mode=0775"
+    with_items:
+      - "{{ gluster_brick_dir }}"
+      - "{{ gluster_mount_dir }}"
+
+  - name: Create GlusterFS volume
+    gluster_volume:
+      state: present
+      name: "{{ gluster_brick_name }}"
+      bricks: "{{ gluster_brick_dirs }}"
+      force: yes
+    register: gluster_volume_output
+    run_once: true
+
+  - name: Start GlusterFS volume
+    shell: |
+      gluster volume start "{{ gluster_brick_name }}"
+    when: "'Volume {{ gluster_brick_name }} started' in gluster_volume_output.stderr"
