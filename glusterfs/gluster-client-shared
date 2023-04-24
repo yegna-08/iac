@@ -1,0 +1,22 @@
+- name: Mount GlusterFS volume
+  hosts: glusterfs_clients
+  become: yes
+  tasks:
+    - name: Install GlusterFS client package
+      ansible.builtin.apt:
+        name: glusterfs-client
+        state: present
+        update_cache: yes
+    - name: Create mount point
+      ansible.builtin.file:
+        path: /mnt/data_efs
+        state: directory
+        owner: root
+        group: root
+        mode: ‘0755’
+    - name: Mount GlusterFS volume
+      ansible.builtin.mount:
+        path: /mnt/data_efs
+        src: {{ hostvars[groups[‘glusterfs_servers’][0]].glusterfs_endpoint }}:/data_efs
+        fstype: glusterfs
+        state: mounted

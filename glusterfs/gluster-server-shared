@@ -1,0 +1,27 @@
+- name: Create GlusterFS volume
+  hosts: glusterfs_servers
+  become: yes
+  vars:
+    volume_name: data_efs
+    brick_path: /home/magics/nvme/brick1
+  tasks:
+  - name: Install GlusterFS packages
+    ansible.builtin.package:
+      name:
+        - glusterfs-server
+      state: present
+  - name: Start and enable GlusterFS service
+    ansible.builtin.systemd:
+      name: glusterd
+      state: started
+      enabled: yes
+  - name: Create the GlusterFS volume
+    ansible.builtin.shell: >
+      gluster volume create {{ volume_name }} {% for host in groups[‘glusterfs_servers’] %}{{ host }}:{{ brick_path }} {% endfor %}
+      force
+    register: result
+    failed_when: “‘success’ not in result.stdout”
+  - name: Start the GlusterFS volume
+    ansible.builtin.shell: gluster volume start {{ volume_name }}
+    register: result
+    failed_when: “‘success’ not in result.stdout”
